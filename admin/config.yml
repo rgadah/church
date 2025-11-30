@@ -1,0 +1,54 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "static/uploads"
+public_folder: "/static/uploads"
+
+collections:
+  # ----------------------------
+  # CALENDAR EVENTS COLLECTION
+  # ----------------------------
+  - name: "calendar"
+    label: "Calendar Events"
+    folder: "content/calendar"
+    create: true
+    slug: "{{slug}}"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Event Date", name: "date", widget: "datetime" }
+      - { label: "Category", name: "category", widget: "string" }
+      - { label: "Time", name: "time", widget: "string", required: false }
+      - { label: "Location", name: "location", widget: "string", required: false }
+      - { label: "Featured Image", name: "image", widget: "image", required: false }
+
+      - label: "Gallery Images"
+        name: "carousel"
+        widget: "list"
+        fields:
+          - { label: "Image", name: "img", widget: "image" }
+          - { label: "Caption", name: "caption", widget: "string", required: false }
+
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # ----------------------------
+  # GALLERY COLLECTION
+  # ----------------------------
+  - name: "galleries"
+    label: "Galleries"
+    folder: "content/galleries"
+    create: true
+    slug: "{{slug}}"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Category", name: "category", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+
+      - label: "Images"
+        name: "images"
+        widget: "list"
+        fields:
+          - { label: "Image", name: "url", widget: "image" }
+          - { label: "Caption", name: "caption", widget: "string" }

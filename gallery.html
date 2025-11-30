@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cathedral Galleries - Photo Collection</title>
+ <script src="/_sdk/element_sdk.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" defer></script>
+<script src="/js/cms-loader.js" defer></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Georgia', serif;
+      color: #333;
+      overflow-x: hidden;
+    }
+    * {
+      box-sizing: border-box;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #C41E3A;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-links li {
+      white-space: nowrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.3s;
+      padding: 0.5rem 0.75rem;
+      display: inline-block;
+      border-radius: 5px;
+    }
+    .nav-links a:hover {
+      color: #C41E3A;
+      background: rgba(196, 30, 58, 0.05);
+    }
+    .page-header {
+      width: 100%;
+      background: linear-gradient(135deg, #C41E3A 0%, #8B1528 100%);
+      color: white;
+      padding: 8rem 2rem 4rem 2rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+    .page-header h1 {
+      font-size: 3.5rem;
+      margin: 0 0 1rem 0;
+    }
+    .page-header p {
+      font-size: 1.3rem;
+      font-style: italic;
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .filter-section {
+      width: 100%;
+      background: white;
+      padding: 1.5rem 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 4.5rem;
+      z-index: 100;
+    }
+
+    .filter-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #FFB6C1;
+      background: white;
+      color: #333;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Georgia', serif;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      background: #FFB6C1;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .filter-btn.active {
+      background: #C41E3A;
+      border-color: #C41E3A;
+      color: white;
+    }
+
+    /* Gallery Section */
+    .gallery-section {
+      width: 100%;
+      padding: 4rem 2rem;
+      background: #f9f9f9;
+      min-height: 60vh;
+    }
+
+    .gallery-container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .category-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .category-title {
+      font-size: 2.5rem;
+      color: #C41E3A;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .category-description {
+      font-size: 1.2rem;
+      color: #666;
+      font-style: italic;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .gallery-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      background: white;
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(196, 30, 58, 0.2);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .gallery-item-caption {
+      padding: 0.9rem;
+      background: white;
+      text-align: center;
+    }
+
+    .gallery-item-caption h3 {
+      font-size: 1rem;
+      margin: 0;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* Loading State */
+    .loading-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border: 4px solid #FFB6C1;
+      border-top-color: #C41E3A;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: #666;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state-text {
+      font-size: 1.3rem;
+      color: #666;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-image {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
+    .lightbox-caption {
+      position: absolute;
+      bottom: -3rem;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: white;
+      font-size: 1.2rem;
+      padding: 1rem;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 2rem;
+      cursor: pointer;
+      color: #C41E3A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .lightbox-close:hover {
+      background: #C41E3A;
+      color: white;
+      transform: rotate(90deg);
+    }
+
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      font-size: 2rem;
+      cursor: pointer;
+      color: #C41E3A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .lightbox-nav:hover {
+      background: white;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .lightbox-nav.prev {
+      left: 2rem;
+    }
+
+    .lightbox-nav.next {
+      right: 2rem;
+    }
+
+    /* Footer */
+    footer {
+      width: 100%;
+      background: #333;
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-text {
+      margin: 0.5rem 0;
+    }
+
+    /* Responsive Design */
+    @media (min-width: 1920px) {
+      nav {
+        padding: 1.75rem 2.5rem;
+      }
+
+      .nav-container {
+        max-width: 1800px;
+      }
+
+      .logo {
+        font-size: 1.75rem;
+      }
+
+      .nav-links {
+        gap: 2.5rem;
+        font-size: 1.1rem;
+      }
+
+      .page-header {
+        padding: 9rem 2.5rem 4.5rem 2.5rem;
+      }
+
+      .page-header h1 {
+        font-size: 4.5rem;
+      }
+
+      .page-header p {
+        font-size: 1.6rem;
+      }
+
+      .filter-section {
+        padding: 2rem 2.5rem;
+        top: 5.5rem;
+      }
+
+      .filter-container {
+        max-width: 1800px;
+        gap: 1.25rem;
+      }
+
+      .filter-btn {
+        padding: 0.9rem 1.8rem;
+        font-size: 1.1rem;
+      }
+
+      .gallery-section {
+        padding: 5rem 2.5rem;
+      }
+
+      .gallery-container {
+        max-width: 2000px;
+      }
+
+      .category-header {
+        margin-bottom: 3.5rem;
+      }
+
+      .category-title {
+        font-size: 3.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .category-description {
+        font-size: 1.5rem;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3.5rem;
+      }
+
+      .gallery-item {
+        border-radius: 18px;
+      }
+
+      .gallery-item img {
+        height: 380px;
+      }
+
+      .gallery-item-caption {
+        padding: 1.25rem;
+      }
+
+      .gallery-item-caption h3 {
+        font-size: 1.25rem;
+      }
+
+      .lightbox-close {
+        top: 2.5rem;
+        right: 2.5rem;
+        width: 55px;
+        height: 55px;
+        font-size: 2.2rem;
+      }
+
+      .lightbox-nav {
+        width: 65px;
+        height: 65px;
+        font-size: 2.2rem;
+      }
+
+      .lightbox-nav.prev {
+        left: 2.5rem;
+      }
+
+      .lightbox-nav.next {
+        right: 2.5rem;
+      }
+
+      .lightbox-caption {
+        font-size: 1.4rem;
+        bottom: -3.5rem;
+      }
+
+      footer {
+        padding: 4rem 2.5rem;
+      }
+
+      .footer-text {
+        font-size: 1.1rem;
+      }
+    }
+
+    @media (min-width: 2560px) {
+      nav {
+        padding: 2rem 3rem;
+      }
+
+      .nav-container {
+        max-width: 2400px;
+      }
+
+      .logo {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        gap: 3rem;
+        font-size: 1.3rem;
+      }
+
+      .page-header {
+        padding: 10rem 3rem 5rem 3rem;
+      }
+
+      .page-header h1 {
+        font-size: 5.5rem;
+      }
+
+      .page-header p {
+        font-size: 2rem;
+      }
+
+      .filter-section {
+        padding: 2.5rem 3rem;
+        top: 6.5rem;
+      }
+
+      .filter-container {
+        max-width: 2400px;
+        gap: 1.5rem;
+      }
+
+      .filter-btn {
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
+        border-width: 2.5px;
+      }
+
+      .gallery-section {
+        padding: 6rem 3rem;
+      }
+
+      .gallery-container {
+        max-width: 2400px;
+      }
+
+      .category-header {
+        margin-bottom: 4.5rem;
+      }
+
+      .category-title {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .category-description {
+        font-size: 1.75rem;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+        gap: 2.5rem;
+        margin-bottom: 4.5rem;
+      }
+
+      .gallery-item {
+        border-radius: 20px;
+      }
+
+      .gallery-item img {
+        height: 480px;
+      }
+
+      .gallery-item-caption {
+        padding: 1.5rem;
+      }
+
+      .gallery-item-caption h3 {
+        font-size: 1.5rem;
+      }
+
+      .loading-state {
+        padding: 5rem 3rem;
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 5px;
+      }
+
+      .loading-text {
+        font-size: 1.4rem;
+        margin-top: 1.5rem;
+      }
+
+      .empty-state {
+        padding: 5rem 3rem;
+      }
+
+      .empty-state-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .empty-state-text {
+        font-size: 1.6rem;
+      }
+
+      .lightbox-close {
+        top: 3rem;
+        right: 3rem;
+        width: 65px;
+        height: 65px;
+        font-size: 2.5rem;
+      }
+
+      .lightbox-nav {
+        width: 75px;
+        height: 75px;
+        font-size: 2.5rem;
+      }
+
+      .lightbox-nav.prev {
+        left: 3rem;
+      }
+
+      .lightbox-nav.next {
+        right: 3rem;
+      }
+
+      .lightbox-caption {
+        font-size: 1.6rem;
+        bottom: -4rem;
+        padding: 1.5rem;
+      }
+
+      footer {
+        padding: 5rem 3rem;
+      }
+
+      .footer-text {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (max-width: 991px) {
+      .page-header h1 {
+        font-size: 2.5rem;
+      }
+
+      .page-header p {
+        font-size: 1.1rem;
+      }
+
+      .filter-section {
+        top: 4rem;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .gallery-item img {
+        height: 250px;
+      }
+
+      .category-title {
+        font-size: 2rem;
+      }
+
+      .category-description {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 767px) {
+      nav {
+        padding: 0.75rem 0.75rem;
+      }
+
+      .nav-container {
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .logo {
+        font-size: 1.1rem;
+        width: 100%;
+        text-align: center;
+      }
+
+      .nav-links {
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .nav-links a {
+        padding: 0.35rem 0.65rem;
+      }
+
+      .page-header {
+        padding: 4.5rem 1rem 2rem 1rem;
+        margin-top: 3.5rem;
+      }
+
+      .page-header h1 {
+        font-size: 1.9rem;
+        line-height: 1.3;
+      }
+
+      .page-header p {
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+
+      .filter-section {
+        padding: 1rem 0.75rem;
+        top: 3rem;
+      }
+
+      .filter-container {
+        gap: 0.5rem;
+      }
+
+      .filter-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        border-width: 1.5px;
+      }
+
+      .gallery-section {
+        padding: 2.5rem 0.75rem;
+      }
+
+      .category-header {
+        margin-bottom: 2rem;
+      }
+
+      .category-title {
+        font-size: 1.7rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .category-description {
+        font-size: 1rem;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.9rem;
+        margin-bottom: 2rem;
+      }
+
+      .gallery-item {
+        border-radius: 10px;
+      }
+
+      .gallery-item img {
+        height: 180px;
+      }
+
+      .gallery-item-caption {
+        padding: 0.75rem;
+      }
+
+      .gallery-item-caption h3 {
+        font-size: 0.9rem;
+      }
+
+      .lightbox-close {
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.4rem;
+      }
+
+      .lightbox-nav {
+        width: 45px;
+        height: 45px;
+        font-size: 1.4rem;
+      }
+
+      .lightbox-nav.prev {
+        left: 0.75rem;
+      }
+
+      .lightbox-nav.next {
+        right: 0.75rem;
+      }
+
+      .lightbox-caption {
+        font-size: 1rem;
+        bottom: -2.5rem;
+      }
+    }
+
+    @media (max-width: 479px) {
+      nav {
+        padding: 0.65rem 0.5rem;
+      }
+
+      .logo {
+        font-size: 1rem;
+      }
+
+      .nav-links {
+        gap: 0.4rem;
+        font-size: 0.75rem;
+      }
+
+      .nav-links a {
+        padding: 0.3rem 0.55rem;
+      }
+
+      .page-header {
+        padding: 4rem 0.75rem 1.75rem 0.75rem;
+        margin-top: 3.2rem;
+      }
+
+      .page-header h1 {
+        font-size: 1.6rem;
+        line-height: 1.25;
+      }
+
+      .page-header p {
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .filter-section {
+        padding: 0.85rem 0.6rem;
+        top: 2.8rem;
+      }
+
+      .filter-container {
+        gap: 0.45rem;
+      }
+
+      .filter-btn {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.8rem;
+        border-width: 1.5px;
+      }
+
+      .gallery-section {
+        padding: 2rem 0.6rem;
+      }
+
+      .category-header {
+        margin-bottom: 1.75rem;
+      }
+
+      .category-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .category-description {
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .gallery-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .gallery-item {
+        border-radius: 8px;
+      }
+
+      .gallery-item img {
+        height: 160px;
+      }
+
+      .gallery-item-caption {
+        padding: 0.65rem;
+      }
+
+      .gallery-item-caption h3 {
+        font-size: 0.85rem;
+      }
+
+      .loading-state {
+        padding: 3rem 1rem;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+      }
+
+      .loading-text {
+        font-size: 1rem;
+      }
+
+      .empty-state {
+        padding: 3rem 1rem;
+      }
+
+      .empty-state-icon {
+        font-size: 3rem;
+      }
+
+      .empty-state-text {
+        font-size: 1.1rem;
+      }
+
+      .lightbox-close {
+        top: 0.6rem;
+        right: 0.6rem;
+        width: 35px;
+        height: 35px;
+        font-size: 1.3rem;
+      }
+
+      .lightbox-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+      }
+
+      .lightbox-nav.prev {
+        left: 0.6rem;
+      }
+
+      .lightbox-nav.next {
+        right: 0.6rem;
+      }
+
+      .lightbox-caption {
+        font-size: 0.95rem;
+        bottom: -2.25rem;
+        padding: 0.75rem;
+      }
+
+      footer {
+        padding: 2rem 0.75rem;
+      }
+
+      .footer-text {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <nav>
+   <div class="nav-container">
+    <div class="logo">
+     St. Mary's Cathedral
+    </div>
+    <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+     <li><a href="gallery.html">Gallery</a></li>
+     <li><a href="community.html">Community</a></li>
+     <li><a href="calendar.html">Calendar</a></li>
+    </ul>
+   </div>
+  </nav>
+  <header class="page-header">
+   <h1 id="pageTitle">Our Galleries</h1>
+   <p id="pageSubtitle">Capturing the Beautiful Moments of Our Cathedral Community</p>
+  </header><!-- Category Filter -->
+  <section class="filter-section">
+   <div class="filter-container" id="filterContainer"><button class="filter-btn active" data-category="all">All Galleries</button>
+   </div>
+  </section><!-- Gallery Display -->
+  <section class="gallery-section">
+   <div class="gallery-container" id="galleryContainer">
+    <div class="loading-state">
+     <div class="loading-spinner"></div>
+     <p class="loading-text">Loading galleries...</p>
+    </div>
+   </div>
+  </section><!-- Lightbox -->
+  <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightboxClose">×</button> <button class="lightbox-nav prev" id="lightboxPrev">‹</button>
+   <div class="lightbox-content"><img class="lightbox-image" id="lightboxImage" src="" alt="">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+   </div><button class="lightbox-nav next" id="lightboxNext">›</button>
+  </div>
+  <footer>
+   <div class="footer-content">
+    <p class="footer-text">St. Mary's Cathedral</p>
+    <p class="footer-text">123 Faith Street | Phone: (555) 123-4567</p>
+    <p class="footer-text">© 2024 All Rights Reserved</p>
+   </div>
+  </footer>
+  <script>
+    const defaultConfig = {
+      page_title: "Our Galleries",
+      page_subtitle: "Capturing the Beautiful Moments of Our Cathedral Community",
+      background_color: "#f9f9f9",
+      surface_color: "#FFFFFF",
+      text_color: "#333333",
+      primary_action_color: "#C41E3A",
+      secondary_action_color: "#FFB6C1",
+      font_family: "Georgia",
+      font_size: 16
+    };
+
+    // Gallery data structure - predicted NetlifyCMS format
+    let galleryData = [];
+    let currentCategory = 'all';
+    let currentLightboxIndex = 0;
+    let currentImages = [];
+
+    // Fetch gallery data from NetlifyCMS
+    async function fetchGalleryData() {
+    try {
+      // small UX delay (optional)
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      if (typeof CMSLoader === 'undefined' || typeof CMSLoader.loadGalleries !== 'function') {
+        console.warn('CMSLoader.loadGalleries not found — ensure /js/cms-loader.js and js-yaml are loaded.');
+        showEmptyState();
+        return;
+      }
+
+      const items = await CMSLoader.loadGalleries(); // returns array of { data, body }
+      if (!Array.isArray(items) || items.length === 0) {
+        showEmptyState();
+        return;
+      }
+
+      galleryData = items.map(g => {
+        const data = g.data || {};
+        // Normalize images: allow array or JSON-string in frontmatter
+        let images = [];
+        if (Array.isArray(data.images)) {
+          images = data.images;
+        } else if (typeof data.images === 'string') {
+          try { images = JSON.parse(data.images); } catch(e) { images = []; }
+        }
+        // Ensure every image object has url & caption keys
+        images = images.map(img => {
+          if (typeof img === 'string') {
+            // if CMS somehow outputs plain string path
+            return { url: img, caption: '' };
+          }
+          return {
+            url: img.url || img.img || img.path || '',
+            caption: (img.caption || img.title || '') 
+          };
+        }).filter(img => img.url);
+
+        return {
+          title: data.title || 'Untitled',
+          category: data.category || 'uncategorized',
+          description: data.description || g.body || '',
+          images
+        };
+      });
+
+      // Render UI
+      renderFilters();
+      renderGallery('all');
+    } catch (err) {
+      console.error('Error loading galleries from CMS:', err);
+      showEmptyState();
+    }
+  }
+
+  // ensure we call it after defining it
+  fetchGalleryData();
+
+    function renderFilters() {
+  const filterContainer = document.getElementById('filterContainer');
+  filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">All Galleries</button>';
+  if (!galleryData || galleryData.length === 0) return;
+  
+  galleryData.forEach(gallery => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.category = gallery.category;
+        btn.textContent = gallery.title;
+        btn.addEventListener('click', () => filterGallery(gallery.category));
+        filterContainer.appendChild(btn);
+      });
+
+      // Add click handlers to all filter buttons
+      const allBtn = filterContainer.querySelector('[data-category="all"]');
+      allBtn.addEventListener('click', () => filterGallery('all'));
+    }
+
+    // Filter gallery by category
+    function filterGallery(category) {
+      currentCategory = category;
+      
+      // Update active button
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.category === category);
+      });
+      
+      renderGallery(category);
+    }
+
+    // Render gallery images
+    function renderGallery(category) {
+      const container = document.getElementById('galleryContainer');
+      container.innerHTML = '';
+
+      const galleries = category === 'all' ? galleryData : galleryData.filter(g => g.category === category);
+
+      if (galleries.length === 0) {
+        showEmptyState();
+        return;
+      }
+
+      galleries.forEach(gallery => {
+        // Category header
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `
+          <h2 class="category-title">${gallery.title}</h2>
+          <p class="category-description">${gallery.description}</p>
+        `;
+        container.appendChild(header);
+
+        // Gallery grid
+        const grid = document.createElement('div');
+        grid.className = 'gallery-grid';
+
+        gallery.images.forEach((image, index) => {
+          const item = document.createElement('div');
+          item.className = 'gallery-item';
+          const imgSrc = image.url || image.img || '';
+const imgCaption = image.caption || '';
+if (!imgSrc) return; // skip items without a URL
+
+item.innerHTML = `
+  <img src="${imgSrc}" alt="${imgCaption}" onerror="this.parentElement.style.display='none';">
+  <div class="gallery-item-caption">
+    <h3>${imgCaption}</h3>
+  </div>
+`;
+          item.addEventListener('click', () => openLightbox(gallery, index));
+          grid.appendChild(item);
+        });
+
+        container.appendChild(grid);
+      });
+    }
+
+    // Show empty state
+    function showEmptyState() {
+      const container = document.getElementById('galleryContainer');
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📷</div>
+          <p class="empty-state-text">No galleries found. Check back soon!</p>
+        </div>
+      `;
+    }
+
+    // Lightbox functionality
+    function openLightbox(gallery, index) {
+      currentImages = gallery.images;
+      currentLightboxIndex = index;
+      showLightboxImage();
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function showLightboxImage() {
+      const image = currentImages[currentLightboxIndex];
+      document.getElementById('lightboxImage').src = image.url;
+      document.getElementById('lightboxCaption').textContent = image.caption;
+    }
+
+    function nextLightboxImage() {
+      currentLightboxIndex = (currentLightboxIndex + 1) % currentImages.length;
+      showLightboxImage();
+    }
+
+    function prevLightboxImage() {
+      currentLightboxIndex = (currentLightboxIndex - 1 + currentImages.length) % currentImages.length;
+      showLightboxImage();
+    }
+
+    // Event listeners
+    document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+    document.getElementById('lightboxNext').addEventListener('click', nextLightboxImage);
+    document.getElementById('lightboxPrev').addEventListener('click', prevLightboxImage);
+    
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox') closeLightbox();
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      const lightbox = document.getElementById('lightbox');
+      if (!lightbox.classList.contains('active')) return;
+      
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextLightboxImage();
+      if (e.key === 'ArrowLeft') prevLightboxImage();
+    });
+
+    // Config change handler
+    async function onConfigChange(config) {
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'serif';
+      const baseSize = config.font_size || defaultConfig.font_size;
+      
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+      document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+      document.body.style.color = config.text_color || defaultConfig.text_color;
+      
+      document.getElementById('pageTitle').textContent = config.page_title || defaultConfig.page_title;
+      document.getElementById('pageSubtitle').textContent = config.page_subtitle || defaultConfig.page_subtitle;
+
+      const pageHeader = document.querySelector('.page-header');
+      pageHeader.style.background = `linear-gradient(135deg, ${config.primary_action_color || defaultConfig.primary_action_color} 0%, ${config.secondary_action_color || defaultConfig.secondary_action_color} 100%)`;
+
+      const logo = document.querySelector('.logo');
+      logo.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+
+      const navLinks = document.querySelectorAll('.nav-links a');
+      navLinks.forEach(link => {
+        link.style.color = config.text_color || defaultConfig.text_color;
+      });
+
+      const categoryTitles = document.querySelectorAll('.category-title');
+      categoryTitles.forEach(title => {
+        title.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+        title.style.fontSize = `${baseSize * 1.56}px`;
+      });
+    }
+
+    // Initialize
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["page_title", config.page_title || defaultConfig.page_title],
+          ["page_subtitle", config.page_subtitle || defaultConfig.page_subtitle]
+        ])
+      });
+    }
+
+    // Load galleries on page load
+    fetchGalleryData();
+  </script>
+  
+  <script>
+    const defaultConfig = {
+      page_title: "Our Community",
+      page_subtitle: "Meet the People Who Make Our Cathedral a Home",
+      leadership_title: "Leadership Board",
+      pastoral_title: "Pastoral Team",
+      committees_title: "Committees & Ministry Teams",
+      background_color: "#FFFFFF",
+      surface_color: "#FFB6C1",
+      text_color: "#333333",
+      primary_action_color: "#C41E3A",
+      secondary_action_color: "#8B1528",
+      font_family: "Georgia",
+      font_size: 16
+    };
+
+    // Carousel functionality
+    let currentSlide = 0;
+    const track = document.getElementById('carouselTrack');
+    const slides = track.querySelectorAll('.carousel-slide');
+    const dotsContainer = document.getElementById('carouselDots');
+    const totalSlides = slides.length;
+
+    // Create dots
+    for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('button');
+      dot.classList.add('carousel-dot');
+      dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+      if (i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+
+    const dots = dotsContainer.querySelectorAll('.carousel-dot');
+
+    function updateCarousel() {
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+      });
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      updateCarousel();
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateCarousel();
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      updateCarousel();
+    }
+
+    document.querySelector('.carousel-nav.next').addEventListener('click', nextSlide);
+    document.querySelector('.carousel-nav.prev').addEventListener('click', prevSlide);
+
+    // Auto-advance carousel
+    setInterval(nextSlide, 5000);
+
+    async function onConfigChange(config) {
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'serif';
+      const baseSize = config.font_size || defaultConfig.font_size;
+      
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+      
+      document.getElementById('pageTitle').textContent = config.page_title || defaultConfig.page_title;
+      document.getElementById('pageSubtitle').textContent = config.page_subtitle || defaultConfig.page_subtitle;
+      document.getElementById('leadershipTitle').textContent = config.leadership_title || defaultConfig.leadership_title;
+      document.getElementById('pastoralTitle').textContent = config.pastoral_title || defaultConfig.pastoral_title;
+      document.getElementById('committeesTitle').textContent = config.committees_title || defaultConfig.committees_title;
+
+      const pageHeader = document.querySelector('.page-header');
+      pageHeader.style.background = `linear-gradient(135deg, ${config.primary_action_color || defaultConfig.primary_action_color} 0%, ${config.secondary_action_color || defaultConfig.secondary_action_color} 100%)`;
+
+      const carouselSection = document.querySelector('.carousel-section');
+      carouselSection.style.background = config.surface_color || defaultConfig.surface_color;
+
+      document.body.style.color = config.text_color || defaultConfig.text_color;
+      document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+
+      const logo = document.querySelector('.logo');
+      logo.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+
+      const navLinks = document.querySelectorAll('.nav-links a');
+      navLinks.forEach(link => {
+        link.style.color = config.text_color || defaultConfig.text_color;
+      });
+
+      const sectionTitles = document.querySelectorAll('.section-title');
+      sectionTitles.forEach(title => {
+        title.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+        title.style.fontSize = `${baseSize * 1.56}px`;
+      });
+
+      const memberNames = document.querySelectorAll('.member-name');
+      memberNames.forEach(name => {
+        name.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+        name.style.fontSize = `${baseSize * 0.94}px`;
+      });
+
+      const committeeNames = document.querySelectorAll('.committee-name');
+      committeeNames.forEach(name => {
+        name.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+        name.style.fontSize = `${baseSize * 0.94}px`;
+      });
+
+      const committeeCards = document.querySelectorAll('.committee-card');
+      committeeCards.forEach(card => {
+        card.style.borderLeftColor = config.primary_action_color || defaultConfig.primary_action_color;
+      });
+
+      const carouselNavs = document.querySelectorAll('.carousel-nav');
+      carouselNavs.forEach(nav => {
+        nav.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+      });
+
+      const activeDot = document.querySelector('.carousel-dot.active');
+      if (activeDot) {
+        activeDot.style.backgroundColor = config.primary_action_color || defaultConfig.primary_action_color;
+      }
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_action_color || defaultConfig.primary_action_color,
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["page_title", config.page_title || defaultConfig.page_title],
+          ["page_subtitle", config.page_subtitle || defaultConfig.page_subtitle],
+          ["leadership_title", config.leadership_title || defaultConfig.leadership_title],
+          ["pastoral_title", config.pastoral_title || defaultConfig.pastoral_title],
+          ["committees_title", config.committees_title || defaultConfig.committees_title]
+        ])
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a6268a622c4aa15',t:'MTc2NDQyMjQ5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
