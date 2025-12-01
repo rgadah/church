@@ -1456,42 +1456,49 @@
 
     // --- ENHANCEMENT 2: Update createDayElement for event names and hover ---
     function createDayElement(day, isOtherMonth, isToday, events) {
-        const hasEvent = events.length > 0;
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'calendar-day';
-      
-        if (isOtherMonth) {
-          dayDiv.classList.add('other-month');
-        } else if (isToday) {
-          dayDiv.classList.add('today');
-        } else if (hasEvent) {
-          dayDiv.classList.add('has-event');
-        }
+    const hasEvent = events.length > 0;
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'calendar-day';
+    
+    // 1. Determine and add all necessary classes
+    if (isOtherMonth) {
+        dayDiv.classList.add('other-month');
+    } 
+    
+    if (isToday) {
+        dayDiv.classList.add('today');
+    }
+    
+    // Add has-event class only if there are events and it's not an 'other-month' day
+    if (hasEvent && !isOtherMonth) {
+        dayDiv.classList.add('has-event');
+    }
 
-        // Container for the day number
-        dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
+    // 2. Build the Event List HTML
+    let eventListHTML = '';
+    
+    if (hasEvent && !isOtherMonth) {
+        // Limit to 2 events to prevent cell overflow
+        const visibleEvents = events.slice(0, 2); 
         
-        if (hasEvent && !isOtherMonth) {
-            let eventTitles = [];
-            let eventListHTML = '<ul class="event-names-list">';
-            
-            events.forEach(event => {
-                // Add event name to the cell
-                eventListHTML += `<li>${event.title}</li>`;
-                // Collect event names for the hover tooltip
-                eventTitles.push(`${event.title} (${event.time})`);
-            });
-            eventListHTML += '</ul>';
+        // Map the event titles to <li> elements
+        const listItems = visibleEvents.map(event => `<li>${event.title}</li>`).join('');
+        
+        eventListHTML = `<ul class="event-names-list">${listItems}</ul>`;
+        
+        // Set the native browser tooltip (using ALL events)
+        const eventTitlesForTooltip = events.map(event => `${event.title} (${event.time})`);
+        dayDiv.title = eventTitlesForTooltip.join('\n'); 
+    }
 
-            // Add the list of event names below the day number
-            dayDiv.innerHTML += eventListHTML;
-            
-            // Set the native browser tooltip for the hover effect
-            dayDiv.title = eventTitles.join('\n'); 
-        }
+    // 3. Use a single assignment to build the final nested HTML structure
+    dayDiv.innerHTML = `
+        <div class="day-number">${day}</div>
+        ${eventListHTML}
+    `;
 
-        return dayDiv;
-    }
+    return dayDiv;
+}
 
     function renderFeaturedEvents() {
       // The status property (upcoming/past) is now accurate due to the fix in fetchEventsFromCMS
