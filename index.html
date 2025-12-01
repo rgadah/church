@@ -116,7 +116,7 @@
       padding: 3rem;
     }
 
-    .hero-shape-container {
+    /* .hero-shape-container {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -125,33 +125,58 @@
       max-width: 1000px;
       height: 70%;
       z-index: 2;
-    }
+    } */
 
-    .hero-shape {
+    /* .hero-shape {
       position: absolute;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.01);
       backdrop-filter: blur(20px);
-      border: 2px solid rgba(255, 182, 193, 0.4);
+      border: 2px solid rgba(255, 182, 193, 0.01);
       clip-path: polygon(15% 10%, 85% 10%, 95% 50%, 85% 90%, 15% 90%, 5% 50%);
-    }
+    } */
 
     .hero-title {
-      font-size: 4rem;
-      margin: 0 0 1rem 0;
-      color: #C41E3A;
-      font-weight: bold;
-      text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
-    }
+    font-size: 4rem;
+    margin: 0 0 0.5rem 0;
+    color: #C41E3A; /* Bold red */
+    font-weight: bold;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.8), 0 0 4px rgba(0,0,0,0.6);
+}
 
-    .hero-subtitle {
-      font-size: 1.5rem;
-      color: #333;
-      font-style: italic;
-      text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
-    }
+.hero-subtitle {
+    font-size: 1.5rem;
+    font-style: italic;
+     margin: 0 0 0.5rem 0;
+    color: #773434; /* Dust pink */
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    position: relative;
+    z-index: 1; /* 👈 FIX: Establishes new stacking context for text/content */
+    border-radius: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
 
+    /* Fading background using pseudo-element */
+}
+
+.hero-subtitle::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255,255,255,0.85);
+    border-radius: 8px;
+    z-index: -1; /* 👈 FIX: Will now correctly be behind the z-index: 1 content */
+    /* Fade edges */
+    mask-image: radial-gradient(circle, black 80%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle, black 80%, transparent 100%);
+    mask-repeat: no-repeat;
+    mask-size: cover;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: cover;
+}
     /* Section with Image Background */
     .content-section {
       width: 100%;
@@ -378,9 +403,9 @@
 
     /* Responsive */
     @media (max-width: 1200px) {
-      .hero-shape-container {
+      /* .hero-shape-container {
         width: 85%;
-      }
+      } */
 
       .section-content {
         gap: 2rem;
@@ -492,10 +517,10 @@
         min-height: 70%;
       }
 
-      .hero-shape-container {
+      /* .hero-shape-container {
         width: 95%;
         height: 75%;
-      }
+      } */
 
       .hero-content {
         padding: 1.5rem;
@@ -627,9 +652,9 @@
         min-height: 60%;
       }
 
-      .hero-shape {
+      /* .hero-shape {
         clip-path: polygon(10% 5%, 90% 5%, 98% 50%, 90% 95%, 10% 95%, 2% 50%);
-      }
+      } */
 
       .hero-content {
         padding: 1rem;
@@ -754,6 +779,8 @@
         gap: 0.5rem;
       }
     }
+    
+</style>
   </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -763,7 +790,7 @@
   <nav>
    <div class="nav-container">
     <div class="logo" id="churchName">
-     St. Mary's Cathedral
+     St. Columba's Catholic Church
     </div>
     <ul class="nav-links">
      <li><a href="index.html">Home</a></li>
@@ -789,11 +816,21 @@
         </script>
   <!-- Hero Section -->
   <section class="hero-section" id="home">
-   <div class="hero-background"><img class="hero-image" src="https://images.unsplash.com/photo-1544500762-7b33969d0eb0?w=1920" alt="Cathedral interior" onerror="this.style.display='none';">
+   <div class="hero-background">
+    <iframe 
+        src="https://www.google.com/maps/embed?pb=!4v1764620901586!6m8!1m7!1sX0TZoau6DAwrVTvsEkXmwg!2m2!1d-25.72857759975069!2d28.20416846824416!3f260.23877!4f-5!5f0.005"
+        width="100%" 
+        height="100%" 
+        style="border:0; pointer-events: none;" 
+        allowfullscreen="" 
+        loading="lazy" 
+        referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+</div>
    </div>
-   <div class="hero-shape-container">
+   /* <div class="hero-shape-container">
     <div class="hero-shape"></div>
-   </div>
+   </div> */
    <div class="hero-content">
     <h1 class="hero-title" id="heroTitle">Welcome to Our Cathedral</h1>
     <p class="hero-subtitle" id="heroSubtitle">A Place of Faith, Hope, and Love</p>
@@ -859,14 +896,14 @@
   </section>
   <footer>
    <div class="footer-content">
-    <p class="footer-text">St. Mary's Cathedral</p>
+    <p class="footer-text">St. Columba's Catholic Church</p>
     <p class="footer-text">123 Faith Street | Phone: (555) 123-4567</p>
     <p class="footer-text">© 2024 All Rights Reserved</p>
    </div>
   </footer>
   <script>
     const defaultConfig = {
-      church_name: "St. Mary's Cathedral",
+      church_name: "St. Columba's Catholic Church",
       hero_title: "Welcome to Our Cathedral",
       hero_subtitle: "A Place of Faith, Hope, and Love",
       welcome_title: "Welcome to Our Parish",
