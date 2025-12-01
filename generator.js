@@ -1,7 +1,7 @@
 // generator.js
 const fs = require('fs');
 const path = require('path');
-const jsyaml = require('js-yaml');
+
 
 // Utility: Normalize image + string values
 function cleanValue(value) {
@@ -22,15 +22,17 @@ function parseMarkdown(md) {
 
   if (!match) return null;
 
-  const yaml = match[1];
+  const jsonString = match[1].trim(); // Get the frontmatter, treat it as JSON
   const body = match[2];
 
   let data = {};
 
   try {
-    data = jsyaml.load(yaml) || {};
+    // Use native JSON.parse()
+    data = JSON.parse(jsonString) || {};
   } catch (e) {
-    console.warn("YAML parse error:", e);
+    // Update console warning to reflect JSON parsing
+    console.warn("JSON parse error:", e);
   }
 
   // Clean image fields like in your Node script
