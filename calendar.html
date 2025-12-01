@@ -207,12 +207,15 @@
       font-size: clamp(0.85rem, 1.2vw, 1.1rem);
       border-bottom: 2px solid #FFB6C1;
     }
-
+    
+    /* --- MODIFIED: Base Calendar Day Style for Event Listing --- */
     .calendar-day {
       aspect-ratio: 1;
+      /* Adjusted to column layout to stack day number and event list */
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: flex-start; /* Default to top alignment for content stacking */
       padding: 0.4rem;
       border-radius: 8px;
       cursor: pointer;
@@ -221,6 +224,12 @@
       background: white;
       min-height: clamp(50px, 6vw, 80px);
       font-size: clamp(0.9rem, 1.2vw, 1.2rem);
+      overflow: hidden; /* Hide event name overflow if too many exist */
+    }
+
+    /* Re-center the number for days without events */
+    .calendar-day:not(.has-event) {
+        justify-content: center;
     }
 
     .calendar-day:hover {
@@ -257,18 +266,40 @@
       background: linear-gradient(135deg, #FF99AA 0%, #FFB6C1 100%);
     }
 
-    .event-indicator {
-      width: 5px;
-      height: 5px;
-      background: #C41E3A;
-      border-radius: 50%;
-      position: absolute;
-      bottom: 0.3rem;
+    /* --- NEW STYLES for Event Names on Calendar Day --- */
+    .calendar-day .day-number {
+        font-weight: bold;
+        font-size: 1.1em;
+        padding-bottom: 0.1rem;
+        line-height: 1;
     }
 
-    .calendar-day.today .event-indicator {
-      background: white;
+    .calendar-day .event-names-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.2rem 0 0 0;
+      width: 100%;
+      text-align: center;
+      flex-grow: 1; 
+      min-height: 0;
     }
+
+    .calendar-day .event-names-list li {
+      font-size: 0.65rem; /* Small font size for multiple events */
+      line-height: 1.1;
+      color: #C41E3A; /* Use Primary Color for event names */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    /* --- REMOVED: Event Indicator Dot (Replaced by Names) --- */
+    .event-indicator {
+      display: none; 
+    }
+    /* --- END OF CALENDAR ENHANCEMENT STYLES --- */
+
 
     /* Featured Events Grid Section */
     .featured-events-section {
@@ -980,7 +1011,8 @@
       }
 
       .calendar-day {
-        min-height: 45px;
+        /* ADJUSTMENT: Increased min-height to better accommodate the event names on mobile */
+        min-height: 60px;
         font-size: 0.85rem;
       }
 
@@ -1374,11 +1406,11 @@
 
 
     function getEventsForDate(date) {
-      // Still uses date only for calendar rendering, which is fine
       const dateStr = date.toISOString().split('T')[0];
       return eventsData.filter(event => event.date === dateStr);
     }
 
+    // --- ENHANCEMENT 1: Update renderCalendar to pass event data ---
     function renderCalendar() {
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -1392,7 +1424,8 @@
       const todayDate = today.getDate();
 
       for (let i = firstDay - 1; i >= 0; i--) {
-        const dayDiv = createDayElement(daysInPrevMonth - i, true, false);
+        // Pass empty array for days in previous month
+        const dayDiv = createDayElement(daysInPrevMonth - i, true, false, []);
         calendarDays.appendChild(dayDiv);
       }
 
@@ -1401,7 +1434,9 @@
         const date = new Date(currentYear, currentMonth, day);
         const events = getEventsForDate(date);
         
-        const dayDiv = createDayElement(day, false, isToday, events.length > 0);
+        // Pass the list of events for the current day
+        const dayDiv = createDayElement(day, false, isToday, events);
+        
         if (events.length > 0) {
           dayDiv.addEventListener('click', () => scrollToEvent(events[0]));
         }
@@ -1411,34 +1446,51 @@
       const totalCells = calendarDays.children.length;
       const remainingCells = 42 - totalCells;
       for (let day = 1; day <= remainingCells; day++) {
-        const dayDiv = createDayElement(day, true, false);
+        // Pass empty array for days in next month
+        const dayDiv = createDayElement(day, true, false, []);
         calendarDays.appendChild(dayDiv);
       }
 
       document.getElementById('currentMonth').textContent = `${months[currentMonth]} ${currentYear}`;
     }
 
-    function createDayElement(day, isOtherMonth, isToday, hasEvent) {
-      const dayDiv = document.createElement('div');
-      dayDiv.className = 'calendar-day';
+    // --- ENHANCEMENT 2: Update createDayElement for event names and hover ---
+    function createDayElement(day, isOtherMonth, isToday, events) {
+        const hasEvent = events.length > 0;
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
       
-      if (isOtherMonth) {
-        dayDiv.classList.add('other-month');
-      } else if (isToday) {
-        dayDiv.classList.add('today');
-      } else if (hasEvent) {
-        dayDiv.classList.add('has-event');
-      }
+        if (isOtherMonth) {
+          dayDiv.classList.add('other-month');
+        } else if (isToday) {
+          dayDiv.classList.add('today');
+        } else if (hasEvent) {
+          dayDiv.classList.add('has-event');
+        }
 
-      dayDiv.textContent = day;
+        // Container for the day number
+        dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
+        
+        if (hasEvent && !isOtherMonth) {
+            let eventTitles = [];
+            let eventListHTML = '<ul class="event-names-list">';
+            
+            events.forEach(event => {
+                // Add event name to the cell
+                eventListHTML += `<li>${event.title}</li>`;
+                // Collect event names for the hover tooltip
+                eventTitles.push(`${event.title} (${event.time})`);
+            });
+            eventListHTML += '</ul>';
 
-      if (hasEvent && !isOtherMonth) {
-        const indicator = document.createElement('div');
-        indicator.className = 'event-indicator';
-        dayDiv.appendChild(indicator);
-      }
+            // Add the list of event names below the day number
+            dayDiv.innerHTML += eventListHTML;
+            
+            // Set the native browser tooltip for the hover effect
+            dayDiv.title = eventTitles.join('\n'); 
+        }
 
-      return dayDiv;
+        return dayDiv;
     }
 
     function renderFeaturedEvents() {
@@ -1643,7 +1695,7 @@
       const overlay = document.getElementById('popupOverlay');
 
       document.getElementById('popupImage').src = event.image;
-      document.getElementById('popupTitle').textContent = event.title;
+      document.க்காரdocument.getElementById('popupTitle').textContent = event.title;
       
       const eventDate = new Date(event.date);
       const formattedDate = eventDate.toLocaleDateString('en-US', { 
