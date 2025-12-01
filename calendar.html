@@ -1290,16 +1290,41 @@
     // ===== DECAP CMS INTEGRATION =====
 
     // Main fetch function with fallback to mock data
-    async function fetchEventsFromCMS() {
+    async function loadCalendar() {
     try {
-      // small loading delay for UX (optional)
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // 1. Fetch the JSON data
+      const response = await fetch('./public/calendar.json');
+      const events = await response.json(); // events is an array of objects
 
-      if (typeof CMSLoader === 'undefined' || typeof CMSLoader.loadCalendar !== 'function') {
-        console.warn('CMSLoader.loadCalendar not found — ensure /js/cms-loader.js and js-yaml are loaded.');
-        eventsData = [];
-        return [];
+      const container = document.getElementById('calendar-container');
+
+      if (events.length === 0) {
+        container.innerHTML = '<p>No calendar events found.</p>';
+        return;
       }
+
+      // 2. Loop through the events and create HTML elements
+      events.forEach(event => {
+        const eventElement = document.createElement('div');
+        eventElement.className = 'calendar-entry';
+        eventElement.innerHTML = `
+          <h3>${event.title}</h3>
+          <p><strong>Date:</strong> ${event.date ? new Date(event.date).toLocaleDateString() : 'N/A'}</p>
+          <p><strong>Category:</strong> ${event.category}</p>
+          <p><strong>Location:</strong> ${event.location || 'Online'}</p>
+          <p>${event.body.substring(0, 150)}...</p>
+          `;
+        container.appendChild(eventElement);
+      });
+
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
+      document.getElementById('calendar-container').innerHTML = '<p>Failed to load events.</p>';
+    }
+  }
+
+  // Execute the function when the page loads
+  loadCalendar();
 
       // load calendar markdown items (array of { data, body } )
       const items = await CMSLoader.loadCalendar();

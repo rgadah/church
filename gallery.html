@@ -1030,22 +1030,40 @@
     let currentImages = [];
 
     // Fetch gallery data from NetlifyCMS
-    async function fetchGalleryData() {
+    async function loadGalleries() {
     try {
-      // small UX delay (optional)
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // 1. Fetch the JSON data
+      const response = await fetch('./public/galleries.json');
+      const galleries = await response.json(); // galleries is an array of objects
 
-      if (typeof CMSLoader === 'undefined' || typeof CMSLoader.loadGalleries !== 'function') {
-        console.warn('CMSLoader.loadGalleries not found — ensure /js/cms-loader.js and js-yaml are loaded.');
-        showEmptyState();
+      const container = document.getElementById('gallery-container');
+
+      if (galleries.length === 0) {
+        container.innerHTML = '<p>No galleries found.</p>';
         return;
       }
 
-      const items = await CMSLoader.loadGalleries(); // returns array of { data, body }
-      if (!Array.isArray(items) || items.length === 0) {
-        showEmptyState();
-        return;
-      }
+      // 2. Loop through the galleries and create HTML elements
+      galleries.forEach(gallery => {
+        const galleryElement = document.createElement('div');
+        galleryElement.className = 'gallery-summary';
+        galleryElement.innerHTML = `
+          <h2>${gallery.title}</h2>
+          <p><strong>Category:</strong> ${gallery.category}</p>
+          <p>${gallery.description}</p>
+          `;
+        container.appendChild(galleryElement);
+      });
+
+    } catch (error) {
+      console.error('Error loading gallery data:', error);
+      document.getElementById('gallery-container').innerHTML = '<p>Failed to load galleries.</p>';
+    }
+  }
+
+  // Execute the function when the page loads
+  loadGalleries();
+      
 
       galleryData = items.map(g => {
         const data = g.data || {};
