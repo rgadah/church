@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <title>CMS Login</title>
   <meta name="robots" content="noindex" />
+
+  <!-- Netlify Identity (necessary when using git-gateway) -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <!-- Load Netlify CMS -->
+  <!-- REQUIRED ROOT DIV -->
+  <div id="nc-root"></div>
+
+  <!-- Netlify CMS -->
   <script src="https://unpkg.com/netlify-cms-app/dist/netlify-cms.js"></script>
 
   <script>
-    // Auto-login redirect
+    // Optional: auto-refresh after login
     if (window.netlifyIdentity) {
       window.netlifyIdentity.on("init", user => {
         if (!user) window.netlifyIdentity.on("login", () => window.location.reload());

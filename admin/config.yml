@@ -14,7 +14,7 @@ collections:
     folder: "content/calendar"
     create: true
     slug: "{{slug}}"
-    format: "frontmatter"
+    format: "yaml-frontmatter"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Event Date", name: "date", widget: "datetime" }
@@ -40,7 +40,7 @@ collections:
     folder: "content/galleries"
     create: true
     slug: "{{slug}}"
-    format: "frontmatter"
+    format: "yaml-frontmatter"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "string" }
