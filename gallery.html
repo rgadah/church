@@ -1012,339 +1012,325 @@
   </footer>
   <script>
     const defaultConfig = {
-      page_title: "Our Galleries",
-      page_subtitle: "Capturing the Beautiful Moments of Our Cathedral Community",
-      background_color: "#f9f9f9",
-      surface_color: "#FFFFFF",
-      text_color: "#333333",
-      primary_action_color: "#C41E3A",
-      secondary_action_color: "#FFB6C1",
-      font_family: "Georgia",
-      font_size: 16
+        page_title: "Our Galleries",
+        page_subtitle: "Capturing the Beautiful Moments of Our Cathedral Community",
+        background_color: "#f9f9f9",
+        surface_color: "#FFFFFF",
+        text_color: "#333333",
+        primary_action_color: "#C41E3A",
+        secondary_action_color: "#FFB6C1",
+        font_family: "Georgia",
+        font_size: 16
     };
 
-    // Gallery data structure - predicted NetlifyCMS format
     let galleryData = [];
     let currentCategory = 'all';
     let currentLightboxIndex = 0;
     let currentImages = [];
 
-    // Fetch gallery data from NetlifyCMS
-    async function loadGalleries() {
-    try {
-      // 1. Fetch the JSON data
-      const response = await fetch('./public/galleries.json');
-      const galleries = await response.json(); // galleries is an array of objects
+    // --- 1. DATA LOADING AND PROCESSING ---
+    // This function fetches data using the CMS loader (via generator.js's output)
+    async function fetchGalleryData() {
+        try {
+            // Assumes a global function from cms-loader.js to fetch the collection data
+            const items = await window.loadCMSCollection('galleries');
 
-      const container = document.getElementById('gallery-container');
+            galleryData = items.map(g => {
+                const data = g.data || {};
+                
+                // Normalize images field: looks for 'images' array in frontmatter
+                let images = [];
+                if (Array.isArray(data.images)) {
+                    images = data.images;
+                } else if (typeof data.images === 'string') {
+                    try { images = JSON.parse(data.images); } catch(e) { images = []; }
+                }
+                
+                // Ensure every image object has valid url & caption keys
+                images = images.map(img => {
+                    if (typeof img === 'string') {
+                        return { url: img, caption: '' };
+                    }
+                    return {
+                        url: img.url || img.img || img.path || '',
+                        caption: (img.caption || img.title || '') 
+                    };
+                }).filter(img => img.url);
 
-      if (galleries.length === 0) {
-        container.innerHTML = '<p>No galleries found.</p>';
-        return;
-      }
+                return {
+                    title: data.title || 'Untitled',
+                    category: data.category || 'uncategorized',
+                    description: data.description || g.body || '',
+                    images
+                };
+            });
 
-      // 2. Loop through the galleries and create HTML elements
-      galleries.forEach(gallery => {
-        const galleryElement = document.createElement('div');
-        galleryElement.className = 'gallery-summary';
-        galleryElement.innerHTML = `
-          <h2>${gallery.title}</h2>
-          <p><strong>Category:</strong> ${gallery.category}</p>
-          <p>${gallery.description}</p>
-          `;
-        container.appendChild(galleryElement);
-      });
-
-    } catch (error) {
-      console.error('Error loading gallery data:', error);
-      document.getElementById('gallery-container').innerHTML = '<p>Failed to load galleries.</p>';
-    }
-  }
-
-  // Execute the function when the page loads
-  loadGalleries();
-      
-
-      galleryData = items.map(g => {
-        const data = g.data || {};
-        // Normalize images: allow array or JSON-string in frontmatter
-        let images = [];
-        if (Array.isArray(data.images)) {
-          images = data.images;
-        } else if (typeof data.images === 'string') {
-          try { images = JSON.parse(data.images); } catch(e) { images = []; }
+            // Render UI
+            renderFilters();
+            renderGallery('all');
+        } catch (err) {
+            console.error('Error loading galleries from CMS:', err);
+            showEmptyState();
         }
-        // Ensure every image object has url & caption keys
-        images = images.map(img => {
-          if (typeof img === 'string') {
-            // if CMS somehow outputs plain string path
-            return { url: img, caption: '' };
-          }
-          return {
-            url: img.url || img.img || img.path || '',
-            caption: (img.caption || img.title || '') 
-          };
-        }).filter(img => img.url);
-
-        return {
-          title: data.title || 'Untitled',
-          category: data.category || 'uncategorized',
-          description: data.description || g.body || '',
-          images
-        };
-      });
-
-      // Render UI
-      renderFilters();
-      renderGallery('all');
-    } catch (err) {
-      console.error('Error loading galleries from CMS:', err);
-      showEmptyState();
     }
-  }
 
-  // ensure we call it after defining it
-  fetchGalleryData();
+    // --- 2. UI Rendering Functions ---
 
     function renderFilters() {
-  const filterContainer = document.getElementById('filterContainer');
-  filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">All Galleries</button>';
-  if (!galleryData || galleryData.length === 0) return;
-  
-  galleryData.forEach(gallery => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        btn.dataset.category = gallery.category;
-        btn.textContent = gallery.title;
-        btn.addEventListener('click', () => filterGallery(gallery.category));
-        filterContainer.appendChild(btn);
-      });
+        const filterContainer = document.getElementById('filterContainer');
+        filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">All Galleries</button>';
+        
+        if (!galleryData || galleryData.length === 0) return;
+        
+        // Collect unique categories/gallery titles to create filter buttons
+        const uniqueCategories = new Set();
+        galleryData.forEach(gallery => {
+            if (!uniqueCategories.has(gallery.title)) {
+                uniqueCategories.add(gallery.title);
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.dataset.category = gallery.title; // Filter by title for individual galleries
+                btn.textContent = gallery.title;
+                btn.addEventListener('click', () => filterGallery(gallery.title));
+                filterContainer.appendChild(btn);
+            }
+        });
 
-      // Add click handlers to all filter buttons
-      const allBtn = filterContainer.querySelector('[data-category="all"]');
-      allBtn.addEventListener('click', () => filterGallery('all'));
+        // Add click handlers to the 'All Galleries' button
+        const allBtn = filterContainer.querySelector('[data-category="all"]');
+        allBtn.addEventListener('click', () => filterGallery('all'));
     }
 
-    // Filter gallery by category
+    // Filter gallery by category (or title, in this case)
     function filterGallery(category) {
-      currentCategory = category;
-      
-      // Update active button
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.category === category);
-      });
-      
-      renderGallery(category);
+        currentCategory = category;
+        
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.category === category);
+        });
+        
+        renderGallery(category);
     }
 
     // Render gallery images
     function renderGallery(category) {
-      const container = document.getElementById('galleryContainer');
-      container.innerHTML = '';
+        const container = document.getElementById('galleryContainer');
+        container.innerHTML = '';
 
-      const galleries = category === 'all' ? galleryData : galleryData.filter(g => g.category === category);
+        const galleries = category === 'all' 
+            ? galleryData 
+            : galleryData.filter(g => g.title === category); // Filter by title since filters are based on titles
 
-      if (galleries.length === 0) {
-        showEmptyState();
-        return;
-      }
+        if (galleries.length === 0) {
+            showEmptyState();
+            return;
+        }
 
-      galleries.forEach(gallery => {
-        // Category header
-        const header = document.createElement('div');
-        header.className = 'category-header';
-        header.innerHTML = `
-          <h2 class="category-title">${gallery.title}</h2>
-          <p class="category-description">${gallery.description}</p>
-        `;
-        container.appendChild(header);
+        galleries.forEach(gallery => {
+            // Category header
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `
+                <h2 class="category-title">${gallery.title}</h2>
+                <p class="category-description">${gallery.description}</p>
+            `;
+            container.appendChild(header);
 
-        // Gallery grid
-        const grid = document.createElement('div');
-        grid.className = 'gallery-grid';
+            // Gallery grid
+            const grid = document.createElement('div');
+            grid.className = 'gallery-grid';
 
-        gallery.images.forEach((image, index) => {
-          const item = document.createElement('div');
-          item.className = 'gallery-item';
-          const imgSrc = image.url || image.img || '';
-const imgCaption = image.caption || '';
-if (!imgSrc) return; // skip items without a URL
+            gallery.images.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                const imgSrc = image.url || '';
+                const imgCaption = image.caption || '';
+                if (!imgSrc) return; // skip items without a URL
 
-item.innerHTML = `
-  <img src="${imgSrc}" alt="${imgCaption}" onerror="this.parentElement.style.display='none';">
-  <div class="gallery-item-caption">
-    <h3>${imgCaption}</h3>
-  </div>
-`;
-          item.addEventListener('click', () => openLightbox(gallery, index));
-          grid.appendChild(item);
+                item.innerHTML = `
+                    <img src="${imgSrc}" alt="${imgCaption}" onerror="this.parentElement.style.display='none';">
+                    <div class="gallery-item-caption">
+                        <h3>${imgCaption}</h3>
+                    </div>
+                `;
+                item.addEventListener('click', () => openLightbox(gallery, index));
+                grid.appendChild(item);
+            });
+
+            container.appendChild(grid);
         });
-
-        container.appendChild(grid);
-      });
     }
 
     // Show empty state
     function showEmptyState() {
-      const container = document.getElementById('galleryContainer');
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📷</div>
-          <p class="empty-state-text">No galleries found. Check back soon!</p>
-        </div>
-      `;
+        const container = document.getElementById('galleryContainer');
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📷</div>
+                <p class="empty-state-text">No galleries found. Check back soon!</p>
+            </div>
+        `;
     }
 
-    // Lightbox functionality
+    // --- 3. Lightbox Functionality ---
+
     function openLightbox(gallery, index) {
-      currentImages = gallery.images;
-      currentLightboxIndex = index;
-      showLightboxImage();
-      document.getElementById('lightbox').classList.add('active');
-      document.body.style.overflow = 'hidden';
+        // Must update currentImages to the images of the selected gallery
+        currentImages = gallery.images;
+        currentLightboxIndex = index;
+        showLightboxImage();
+        document.getElementById('lightbox').classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeLightbox() {
-      document.getElementById('lightbox').classList.remove('active');
-      document.body.style.overflow = '';
+        document.getElementById('lightbox').classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     function showLightboxImage() {
-      const image = currentImages[currentLightboxIndex];
-      document.getElementById('lightboxImage').src = image.url;
-      document.getElementById('lightboxCaption').textContent = image.caption;
+        const image = currentImages[currentLightboxIndex];
+        document.getElementById('lightboxImage').src = image.url;
+        document.getElementById('lightboxCaption').textContent = image.caption;
     }
 
     function nextLightboxImage() {
-      currentLightboxIndex = (currentLightboxIndex + 1) % currentImages.length;
-      showLightboxImage();
+        currentLightboxIndex = (currentLightboxIndex + 1) % currentImages.length;
+        showLightboxImage();
     }
 
     function prevLightboxImage() {
-      currentLightboxIndex = (currentLightboxIndex - 1 + currentImages.length) % currentImages.length;
-      showLightboxImage();
+        currentLightboxIndex = (currentLightboxIndex - 1 + currentImages.length) % currentImages.length;
+        showLightboxImage();
     }
 
-    // Event listeners
+    // --- 4. Event Listeners ---
     document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
     document.getElementById('lightboxNext').addEventListener('click', nextLightboxImage);
     document.getElementById('lightboxPrev').addEventListener('click', prevLightboxImage);
     
     document.getElementById('lightbox').addEventListener('click', (e) => {
-      if (e.target.id === 'lightbox') closeLightbox();
+        if (e.target.id === 'lightbox') closeLightbox();
     });
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-      const lightbox = document.getElementById('lightbox');
-      if (!lightbox.classList.contains('active')) return;
-      
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowRight') nextLightboxImage();
-      if (e.key === 'ArrowLeft') prevLightboxImage();
+        const lightbox = document.getElementById('lightbox');
+        if (!lightbox || !lightbox.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowRight') nextLightboxImage();
+        if (e.key === 'ArrowLeft') prevLightboxImage();
     });
 
-    // Config change handler
+    // --- 5. SDK Configuration and Initialization ---
+
     async function onConfigChange(config) {
-      const customFont = config.font_family || defaultConfig.font_family;
-      const baseFontStack = 'serif';
-      const baseSize = config.font_size || defaultConfig.font_size;
-      
-      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
-      document.body.style.fontSize = `${baseSize}px`;
-      document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
-      document.body.style.color = config.text_color || defaultConfig.text_color;
-      
-      document.getElementById('pageTitle').textContent = config.page_title || defaultConfig.page_title;
-      document.getElementById('pageSubtitle').textContent = config.page_subtitle || defaultConfig.page_subtitle;
+        const customFont = config.font_family || defaultConfig.font_family;
+        const baseFontStack = 'serif';
+        const baseSize = config.font_size || defaultConfig.font_size;
+        
+        document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+        document.body.style.fontSize = `${baseSize}px`;
+        document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+        document.body.style.color = config.text_color || defaultConfig.text_color;
+        
+        document.getElementById('pageTitle').textContent = config.page_title || defaultConfig.page_title;
+        document.getElementById('pageSubtitle').textContent = config.page_subtitle || defaultConfig.page_subtitle;
 
-      const pageHeader = document.querySelector('.page-header');
-      pageHeader.style.background = `linear-gradient(135deg, ${config.primary_action_color || defaultConfig.primary_action_color} 0%, ${config.secondary_action_color || defaultConfig.secondary_action_color} 100%)`;
+        const pageHeader = document.querySelector('.page-header');
+        pageHeader.style.background = `linear-gradient(135deg, ${config.primary_action_color || defaultConfig.primary_action_color} 0%, ${config.secondary_action_color || defaultConfig.secondary_action_color} 100%)`;
 
-      const logo = document.querySelector('.logo');
-      logo.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+        const logo = document.querySelector('.logo');
+        logo.style.color = config.primary_action_color || defaultConfig.primary_action_color;
 
-      const navLinks = document.querySelectorAll('.nav-links a');
-      navLinks.forEach(link => {
-        link.style.color = config.text_color || defaultConfig.text_color;
-      });
+        const navLinks = document.querySelectorAll('.nav-links a');
+        navLinks.forEach(link => {
+            link.style.color = config.text_color || defaultConfig.text_color;
+        });
 
-      const categoryTitles = document.querySelectorAll('.category-title');
-      categoryTitles.forEach(title => {
-        title.style.color = config.primary_action_color || defaultConfig.primary_action_color;
-        title.style.fontSize = `${baseSize * 1.56}px`;
-      });
+        const categoryTitles = document.querySelectorAll('.category-title');
+        categoryTitles.forEach(title => {
+            title.style.color = config.primary_action_color || defaultConfig.primary_action_color;
+            title.style.fontSize = `${baseSize * 1.56}px`;
+        });
+        
+        // Re-render gallery to apply new color/size to dynamic elements
+        if (galleryData.length > 0) {
+            renderGallery(currentCategory);
+        }
     }
 
-    // Initialize
+    // Initialize SDK
     if (window.elementSdk) {
-      window.elementSdk.init({
-        defaultConfig,
-        onConfigChange,
-        mapToCapabilities: (config) => ({
-          recolorables: [
-            {
-              get: () => config.background_color || defaultConfig.background_color,
-              set: (value) => {
-                config.background_color = value;
-                window.elementSdk.setConfig({ background_color: value });
-              }
-            },
-            {
-              get: () => config.surface_color || defaultConfig.surface_color,
-              set: (value) => {
-                config.surface_color = value;
-                window.elementSdk.setConfig({ surface_color: value });
-              }
-            },
-            {
-              get: () => config.text_color || defaultConfig.text_color,
-              set: (value) => {
-                config.text_color = value;
-                window.elementSdk.setConfig({ text_color: value });
-              }
-            },
-            {
-              get: () => config.primary_action_color || defaultConfig.primary_action_color,
-              set: (value) => {
-                config.primary_action_color = value;
-                window.elementSdk.setConfig({ primary_action_color: value });
-              }
-            },
-            {
-              get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
-              set: (value) => {
-                config.secondary_action_color = value;
-                window.elementSdk.setConfig({ secondary_action_color: value });
-              }
-            }
-          ],
-          borderables: [],
-          fontEditable: {
-            get: () => config.font_family || defaultConfig.font_family,
-            set: (value) => {
-              config.font_family = value;
-              window.elementSdk.setConfig({ font_family: value });
-            }
-          },
-          fontSizeable: {
-            get: () => config.font_size || defaultConfig.font_size,
-            set: (value) => {
-              config.font_size = value;
-              window.elementSdk.setConfig({ font_size: value });
-            }
-          }
-        }),
-        mapToEditPanelValues: (config) => new Map([
-          ["page_title", config.page_title || defaultConfig.page_title],
-          ["page_subtitle", config.page_subtitle || defaultConfig.page_subtitle]
-        ])
-      });
+        window.elementSdk.init({
+            defaultConfig,
+            onConfigChange,
+            mapToCapabilities: (config) => ({
+                recolorables: [
+                    {
+                        get: () => config.background_color || defaultConfig.background_color,
+                        set: (value) => {
+                            config.background_color = value;
+                            window.elementSdk.setConfig({ background_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.surface_color || defaultConfig.surface_color,
+                        set: (value) => {
+                            config.surface_color = value;
+                            window.elementSdk.setConfig({ surface_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.text_color || defaultConfig.text_color,
+                        set: (value) => {
+                            config.text_color = value;
+                            window.elementSdk.setConfig({ text_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.primary_action_color || defaultConfig.primary_action_color,
+                        set: (value) => {
+                            config.primary_action_color = value;
+                            window.elementSdk.setConfig({ primary_action_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+                        set: (value) => {
+                            config.secondary_action_color = value;
+                            window.elementSdk.setConfig({ secondary_action_color: value });
+                        }
+                    }
+                ],
+                borderables: [],
+                fontEditable: {
+                    get: () => config.font_family || defaultConfig.font_family,
+                    set: (value) => {
+                        config.font_family = value;
+                        window.elementSdk.setConfig({ font_family: value });
+                    }
+                },
+                fontSizeable: {
+                    get: () => config.font_size || defaultConfig.font_size,
+                    set: (value) => {
+                        config.font_size = value;
+                        window.elementSdk.setConfig({ font_size: value });
+                    }
+                }
+            }),
+            mapToEditPanelValues: (config) => new Map([
+                ["page_title", config.page_title || defaultConfig.page_title],
+                ["page_subtitle", config.page_subtitle || defaultConfig.page_subtitle]
+            ])
+        });
     }
 
     // Load galleries on page load
     fetchGalleryData();
-  </script>
+</script>
   
   <script>
     const defaultConfig = {
