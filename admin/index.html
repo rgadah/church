@@ -12,16 +12,6 @@
   <!-- REQUIRED ROOT DIV -->
   <div id="nc-root"></div>
 
-  <!-- Netlify CMS -->
-  <script src="https://unpkg.com/netlify-cms-app/dist/netlify-cms.js"></script>
-
-  <script>
-    // Optional: auto-refresh after login
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on("init", user => {
-        if (!user) window.netlifyIdentity.on("login", () => window.location.reload());
-      });
-    }
-  </script>
+  
 </body>
 </html>
